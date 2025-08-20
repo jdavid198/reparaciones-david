@@ -7,6 +7,8 @@ export interface RepairEntry {
   fechaIngreso: string;
   nombre: string;
   telefono: string;
+  cantidad: number;
+  descripcion : string;
   valorTrabajo: number;
   abono: number;
   saldo: number;
@@ -26,6 +28,7 @@ export class RepairService {
     const reparacionesRef = collection(this.firestore, 'reparaciones');
     const nuevaReparacion = {
       ...entry,
+      cantidad: entry.cantidad ?? 1,
       estado: 'pendiente' as const,
       fechaCreacion: new Date()
     };

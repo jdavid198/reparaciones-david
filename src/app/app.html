@@ -1,73 +1,97 @@
 <div class="container">
-  <h1>David Peletería - Reparaciones</h1>
-  <form [formGroup]="form" (ngSubmit)="registrar()">
-    <div class="form-grid">
-      <div class="campo">
-        <label>Fecha Ingreso</label>
-        <input type="date" formControlName="fechaIngreso" />
-      </div>
-      
-      <div class="campo">
-        <label>Nombre del Cliente</label>
-        <input type="text" formControlName="nombre" placeholder="Nombre completo" />
-      </div>
-      
-      <div class="campo">
-        <label>Teléfono</label>
-        <input type="tel" formControlName="telefono" placeholder="Ej: 3001234567" />
-      </div>
-      
-      <div class="campo">
-        <label>Valor del Trabajo</label>
-        <input type="number" formControlName="valorTrabajo" placeholder="0" />
-      </div>
-      
-      <div class="campo">
-        <label>Abono</label>
-        <input type="number" formControlName="abono" placeholder="0" />
-      </div>
-      
-      <div class="campo">
-        <label>Saldo</label>
-        <input type="number" formControlName="saldo" placeholder="0" />
-      </div>
-      
-      <div class="campo">
-        <label>Código de Reclamación</label>
-        <input type="text" formControlName="codigoReclamacion" placeholder="Ej: ABC123" />
-      </div>
-      
-      <div class="botones">
-        <button type="submit">Registrar</button>
-        <button type="button" (click)="exportarExcel()">Exportar a Excel</button>
+  
+      <div class="form-header">
+      <img src="/logo.png" alt="Logo" class="logo" />
+      <div class="titulo">
+        <h1>Reparaciones</h1>
       </div>
     </div>
+  
+  <form [formGroup]="form" (ngSubmit)="registrar()">
+    <div class="form-grid-3">
+
+      <!-- Columna 1: Datos del Cliente -->
+      <div class="columna">
+        <h3>Datos del Cliente</h3>
+
+        <div class="campo">
+          <label>Fecha Ingreso</label>
+          <input type="date" formControlName="fechaIngreso" readonly />
+        </div>
+
+        <div class="campo">
+          <label>Nombre del Cliente</label>
+          <input type="text" formControlName="nombre" placeholder="Nombre completo" />
+        </div>
+
+        <div class="campo">
+          <label>Teléfono</label>
+          <input type="tel" formControlName="telefono" placeholder="Ej: 3001234567" />
+        </div>
+      </div>
+
+      <!-- Columna 2: Datos de los Artículos -->
+      <div class="columna">
+        <h3>Datos de los Artículos</h3>
+
+        <div class="campo">
+          <label>Cantidad de artículos</label>
+          <input type="number" formControlName="cantidad" placeholder="Ej: 2" min="1" />
+        </div>
+
+        <div class="campo descripcion">
+          <label>Descripción</label>
+          <textarea formControlName="descripcion"
+            placeholder="Detalle del trabajo, artículo o daño a reparar..."></textarea>
+        </div>
+
+        <div class="campo">
+          <label>Código de Reclamación</label>
+          <input type="text" formControlName="codigoReclamacion" placeholder="Ej: ABC123" />
+        </div>
+      </div>
+
+      <!-- Columna 3: Valores -->
+      <div class="columna">
+        <h3>Valores</h3>
+
+        <div class="campo">
+          <label>Valor del Trabajo</label>
+          <input type="text" formControlName="valorTrabajo" (input)="formatearMoneda('valorTrabajo')"
+            placeholder="$ 0" />
+        </div>
+
+        <div class="campo">
+          <label>Abono</label>
+          <input type="text" formControlName="abono" (input)="formatearMoneda('abono')" placeholder="$ 0" />
+        </div>
+
+        <div class="campo">
+          <label>Saldo</label>
+          <input type="text" formControlName="saldo" readonly />
+        </div>
+      </div>
+    </div>
+
+    <!-- Botones -->
+    <div class="botones">
+      <button type="submit">Registrar</button>
+      <button type="button" (click)="exportarExcel()">Exportar a Excel</button>
+    </div>
   </form>
+
 
   <!-- Filtro de búsqueda -->
   <div class="filtro-container">
     <div class="filtro-input-group">
-      <input 
-        type="text" 
-        [(ngModel)]="filtroTexto" 
-        (keydown.enter)="buscar()"
-        placeholder="🔍 Buscar por código de reclamación o teléfono..."
-        class="filtro-input"
+      <input type="text" [(ngModel)]="filtroTexto" (keydown.enter)="buscar()"
+        placeholder="🔍 Buscar por código de reclamación o teléfono..." class="filtro-input"
         [disabled]="filtrandoEnFirebase">
-      <button 
-        (click)="buscar()"
-        class="btn-buscar"
-        type="button"
-        title="Buscar"
-        [disabled]="filtrandoEnFirebase">
+      <button (click)="buscar()" class="btn-buscar" type="button" title="Buscar" [disabled]="filtrandoEnFirebase">
         <span *ngIf="!filtrandoEnFirebase">🔍</span>
         <span *ngIf="filtrandoEnFirebase">⏳</span>
       </button>
-      <button 
-        *ngIf="filtroTexto.trim() || hayFiltroActivo" 
-        (click)="limpiarFiltro()"
-        class="btn-limpiar"
-        type="button"
+      <button *ngIf="filtroTexto.trim() || hayFiltroActivo" (click)="limpiarFiltro()" class="btn-limpiar" type="button"
         title="Limpiar filtro">
         ✕
       </button>
@@ -87,6 +111,8 @@
         <th>Fecha Ingreso</th>
         <th>Cliente</th>
         <th>Teléfono</th>
+        <th>Cantidad</th>
+        <th>Descripción</th>
         <th>Valor</th>
         <th>Abono</th>
         <th>Saldo</th>
@@ -101,6 +127,8 @@
         <td>{{ rep.fechaIngreso }}</td>
         <td><strong>{{ rep.nombre }}</strong></td>
         <td>{{ rep.telefono }}</td>
+        <td>{{ rep.cantidad }}</td>
+        <td>{{ rep.descripcion }}</td>
         <td>{{ rep.valorTrabajo | currency:'COP':'symbol':'1.0-0' }}</td>
         <td>{{ rep.abono | currency:'COP':'symbol':'1.0-0' }}</td>
         <td>{{ rep.saldo | currency:'COP':'symbol':'1.0-0' }}</td>
@@ -114,29 +142,18 @@
           <span *ngIf="rep.fechaFinalizacion" class="fecha-texto">
             {{ formatearFecha(rep.fechaFinalizacion) }}
           </span>
-          <span *ngIf="!rep.fechaFinalizacion" class="sin-fecha">
-            -
-          </span>
+          <span *ngIf="!rep.fechaFinalizacion" class="sin-fecha">-</span>
         </td>
         <td class="acciones">
-          <button 
-            *ngIf="rep.estado !== 'entregada'"
-            class="btn-entregar"
-            (click)="cambiarEstado(rep.id!, 'entregada')"
+          <button *ngIf="rep.estado !== 'entregada'" class="btn-entregar" (click)="cambiarEstado(rep.id!, 'entregada')"
             title="Marcar como entregada">
             ✓ Entregar
           </button>
-          <button 
-            *ngIf="rep.estado !== 'cancelada'"
-            class="btn-cancelar"
-            (click)="cambiarEstado(rep.id!, 'cancelada')"
+          <button *ngIf="rep.estado !== 'cancelada'" class="btn-cancelar" (click)="cambiarEstado(rep.id!, 'cancelada')"
             title="Marcar como cancelada">
             ✗ Cancelar
           </button>
-          <button 
-            *ngIf="rep.estado !== 'pendiente'"
-            class="btn-pendiente"
-            (click)="cambiarEstado(rep.id!, 'pendiente')"
+          <button *ngIf="rep.estado !== 'pendiente'" class="btn-pendiente" (click)="cambiarEstado(rep.id!, 'pendiente')"
             title="Marcar como pendiente">
             ⏳ Pendiente
           </button>

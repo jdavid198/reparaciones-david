@@ -18,12 +18,16 @@ export class App {
   filtroTexto: string = '';
   filtroAplicado: string = '';
   filtrandoEnFirebase: boolean = false;
+  
+  hoy: string = this.getHoy();
 
   constructor(private fb: FormBuilder, private repairService: RepairService) {
     this.form = this.fb.group({
-      fechaIngreso: ['', Validators.required],
+      fechaIngreso: [this.hoy, Validators.required],
       nombre: ['', Validators.required],
       telefono: ['', Validators.required],
+      cantidad: [1, [Validators.required, Validators.min(1)]],
+      descripcion: ['', Validators.required],
       valorTrabajo: [0, Validators.required],
       abono: [0, Validators.required],
       saldo: [0, Validators.required],
@@ -33,13 +37,50 @@ export class App {
     this.cargarReparaciones('');
   }
 
-  registrar() {
-    if (this.form.valid) {
-      this.repairService.addEntry(this.form.value).then(() => {
-          this.form.reset();
-          this.cargarReparaciones(this.filtroAplicado || '');
+registrar() {
+    if (!this.form.valid) return;
+
+    const raw = this.form.getRawValue();
+
+    // Asegurar números (los inputs visibles están formateados como COP)
+    const valorTrabajoNum = this.obtenerNumero(raw.valorTrabajo);
+    const abonoNum = this.obtenerNumero(raw.abono);
+    const saldoNum = valorTrabajoNum - abonoNum;
+
+    const payload: Omit<RepairEntry, 'id' | 'estado' | 'fechaCreacion'> = {
+      fechaIngreso: raw.fechaIngreso,
+      nombre: raw.nombre,
+      telefono: raw.telefono,
+      cantidad: Number(raw.cantidad) || 1,
+      descripcion: raw.descripcion || '',
+      valorTrabajo: valorTrabajoNum,
+      abono: abonoNum,
+      saldo: saldoNum,
+      codigoReclamacion: raw.codigoReclamacion
+    };
+
+    this.repairService.addEntry(payload).then(() => {
+      this.form.reset({
+        fechaIngreso: this.getHoy(),
+        cantidad: 1,
+        descripcion: '',
+        valorTrabajo: 0,
+        abono: 0,
+        saldo: 0,
+        codigoReclamacion: '',
+        nombre: '',
+        telefono: ''
       });
-    }
+      this.cargarReparaciones(this.filtroAplicado || '');
+    });
+  }
+
+    private getHoy(): string {
+    const fecha = new Date();
+    const yyyy = fecha.getFullYear();
+    const mm = String(fecha.getMonth() + 1).padStart(2, '0');
+    const dd = String(fecha.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
   }
 
   get reparacionesFiltradas(): RepairEntry[] {
@@ -66,7 +107,7 @@ export class App {
     // Validación defensiva del filtro
     const filtroSeguro = filtro || '';
     console.log('cargarReparaciones llamado con filtro:', filtroSeguro);
-    
+
     this.filtrandoEnFirebase = true;
     this.repairService.getEntries(filtroSeguro).subscribe({
       next: (data) => {
@@ -107,7 +148,7 @@ export class App {
 
   formatearFecha(fecha: any): string {
     if (!fecha) return '-';
-    
+
     try {
       // Si es un Timestamp de Firebase, convertir a Date
       let fechaDate: Date;
@@ -119,7 +160,7 @@ export class App {
         // Si es string o number, convertir a Date
         fechaDate = new Date(fecha);
       }
-      
+
       return fechaDate.toLocaleDateString('es-CO', {
         day: '2-digit',
         month: '2-digit',
@@ -139,6 +180,8 @@ export class App {
       'Fecha Ingreso': rep.fechaIngreso,
       'Cliente': rep.nombre,
       'Teléfono': rep.telefono,
+      'Cantidad': rep.cantidad,            
+      'Descripción': rep.descripcion,  
       'Valor del Trabajo': rep.valorTrabajo,
       'Abono': rep.abono,
       'Saldo': rep.saldo,
@@ -146,16 +189,47 @@ export class App {
       'Estado': rep.estado.charAt(0).toUpperCase() + rep.estado.slice(1),
       'Fecha de Finalización': rep.fechaFinalizacion ? this.formatearFecha(rep.fechaFinalizacion) : 'Pendiente'
     }));
-    
+
     const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(datosParaExportar);
     const wb: XLSX.WorkBook = XLSX.utils.book_new();
-    
+
     const nombreHoja = this.filtroTexto.trim() ? 'Reparaciones_Filtradas' : 'Reparaciones';
-    const nombreArchivo = this.filtroTexto.trim() 
+    const nombreArchivo = this.filtroTexto.trim()
       ? `reparaciones_filtradas_${this.filtroTexto.trim()}.xlsx`
       : 'reparaciones.xlsx';
-    
+
     XLSX.utils.book_append_sheet(wb, ws, nombreHoja);
     XLSX.writeFile(wb, nombreArchivo);
   }
+
+  formatearMoneda(campo: 'valorTrabajo' | 'abono') {
+    let valor = this.form.get(campo)?.value || '';
+    const soloNumeros = valor.toString().replace(/\D/g, '');
+    const numero = soloNumeros ? parseInt(soloNumeros, 10) : 0;
+
+    const valorFormateado = new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP',
+      minimumFractionDigits: 0
+    }).format(numero);
+
+    this.form.get(campo)?.setValue(valorFormateado, { emitEvent: false });
+
+    const valorTrabajo = this.obtenerNumero(this.form.get('valorTrabajo')?.value);
+    const abono = this.obtenerNumero(this.form.get('abono')?.value);
+    const saldo = valorTrabajo - abono;
+
+    this.form.get('saldo')?.setValue(
+      new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(saldo),
+      { emitEvent: false }
+    );
+  }
+
+  obtenerNumero(valor: string): number {
+    if (!valor) return 0;
+    return parseInt(valor.toString().replace(/\D/g, ''), 10) || 0;
+  }
+
+
+
 }
