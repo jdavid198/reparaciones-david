@@ -25,7 +25,7 @@ export class App {
     this.form = this.fb.group({
       fechaIngreso: [this.hoy, Validators.required],
       nombre: ['', Validators.required],
-      telefono: ['', Validators.required],
+      telefono: ['', [Validators.required, this.validarTelefono]], 
       cantidad: [1, [Validators.required, Validators.min(1)]],
       descripcion: ['', Validators.required],
       valorTrabajo: [0, Validators.required],
