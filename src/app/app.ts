@@ -1,13 +1,15 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
-import { RepairService, RepairEntry } from './services/repair';
+import { RepairService, RepairEntry } from './services/repair';;
 import * as XLSX from 'xlsx';
+import { ToastService } from './services/toast.service';
+import { ToastComponent } from "./toast.component";
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, ToastComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
@@ -21,11 +23,11 @@ export class App {
   
   hoy: string = this.getHoy();
 
-  constructor(private fb: FormBuilder, private repairService: RepairService) {
+  constructor(private fb: FormBuilder, private repairService: RepairService, private toastService: ToastService) {
     this.form = this.fb.group({
       fechaIngreso: [this.hoy, Validators.required],
       nombre: ['', Validators.required],
-      telefono: ['', [Validators.required, this.validarTelefono]], 
+      telefono: ['', Validators.required],
       cantidad: [1, [Validators.required, Validators.min(1)]],
       descripcion: ['', Validators.required],
       valorTrabajo: [0, Validators.required],
@@ -37,21 +39,29 @@ export class App {
     this.cargarReparaciones('');
   }
 
-registrar() {
-    if (!this.form.valid) return;
+  registrar() {
 
     const raw = this.form.getRawValue();
-
-    // Asegurar números (los inputs visibles están formateados como COP)
     const valorTrabajoNum = this.obtenerNumero(raw.valorTrabajo);
     const abonoNum = this.obtenerNumero(raw.abono);
     const saldoNum = valorTrabajoNum - abonoNum;
+    const cantidad = Math.max(1, Number(raw.cantidad) || 1);
+
+    if (!this.form.valid) {
+      this.toastService.show('Formulario inválido. Revisa los campos.', 'error');
+      return;
+    }
+
+    if (cantidad < 1) {
+      this.toastService.show('❌ La cantidad no puede ser negativa ni cero.', 'error');
+      return;
+    }
 
     const payload: Omit<RepairEntry, 'id' | 'estado' | 'fechaCreacion'> = {
       fechaIngreso: raw.fechaIngreso,
       nombre: raw.nombre,
       telefono: raw.telefono,
-      cantidad: Number(raw.cantidad) || 1,
+      cantidad,
       descripcion: raw.descripcion || '',
       valorTrabajo: valorTrabajoNum,
       abono: abonoNum,
@@ -59,23 +69,29 @@ registrar() {
       codigoReclamacion: raw.codigoReclamacion
     };
 
-    this.repairService.addEntry(payload).then(() => {
-      this.form.reset({
-        fechaIngreso: this.getHoy(),
-        cantidad: 1,
-        descripcion: '',
-        valorTrabajo: 0,
-        abono: 0,
-        saldo: 0,
-        codigoReclamacion: '',
-        nombre: '',
-        telefono: ''
+    this.repairService.addEntry(payload)
+      .then(() => {
+        this.toastService.show('Registro exitoso', 'success');
+        this.form.reset({
+          fechaIngreso: this.getHoy(),
+          cantidad: 1,
+          descripcion: '',
+          valorTrabajo: 0,
+          abono: 0,
+          saldo: 0,
+          codigoReclamacion: '',
+          nombre: '',
+          telefono: ''
+        });
+        this.cargarReparaciones(this.filtroAplicado || '');
+      })
+      .catch(() => {
+        this.toastService.show('❌ Ocurrió un error al registrar', 'error');
       });
-      this.cargarReparaciones(this.filtroAplicado || '');
-    });
   }
 
-    private getHoy(): string {
+
+  private getHoy(): string {
     const fecha = new Date();
     const yyyy = fecha.getFullYear();
     const mm = String(fecha.getMonth() + 1).padStart(2, '0');
@@ -230,6 +246,25 @@ registrar() {
     return parseInt(valor.toString().replace(/\D/g, ''), 10) || 0;
   }
 
+validarInputTelefono(event: any) {
+  let valor = event.target.value;
+  const original = valor;
 
+  // Quitar cualquier cosa que no sea número
+  valor = valor.replace(/\D/g, '');
+  if (valor !== original) {
+    this.toastService.show('Solo se permiten números', 'error');
+  }
+
+  // Limitar a 10 dígitos
+  if (valor.length > 10) {
+    valor = valor.substring(0, 10);
+    this.toastService.show('El teléfono solo puede tener 10 dígitos', 'error');
+  }
+
+  // Setear el valor limpio al input y al form
+  event.target.value = valor;
+  this.form.get('telefono')?.setValue(valor, { emitEvent: false });
+}
 
 }

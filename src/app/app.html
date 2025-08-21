@@ -1,3 +1,4 @@
+<app-toast></app-toast>
 <div class="container">
   
       <div class="form-header">
@@ -26,7 +27,12 @@
 
         <div class="campo">
           <label>Teléfono</label>
-          <input type="tel" formControlName="telefono" placeholder="Ej: 3001234567" />
+          <input type="tel"
+                formControlName="telefono"
+                placeholder="Ej: 3001234567"
+                maxlength="10"
+                inputmode="numeric"
+                (input)="validarInputTelefono($event)" />
         </div>
       </div>
 
@@ -36,7 +42,14 @@
 
         <div class="campo">
           <label>Cantidad de artículos</label>
-          <input type="number" formControlName="cantidad" placeholder="Ej: 2" min="1" />
+          <input 
+            type="number" 
+            formControlName="cantidad" 
+            placeholder="Ej: 2" 
+            min="1"
+          />
+          <div class="error" *ngIf="form.get('cantidad')?.errors?.['min']">
+          </div>
         </div>
 
         <div class="campo descripcion">
