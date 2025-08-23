@@ -111,4 +111,15 @@ export class RepairService {
       throw error;
     }
   }
+
+  async actualizarReparacion(id: string, cambios: Partial<RepairEntry>) {
+    try {
+      const docRef = doc(this.firestore, 'reparaciones', id);
+      await updateDoc(docRef, cambios);
+    } catch (error) {
+      console.error('Error al actualizar reparación:', error);
+      throw error;
+    }
+  }
+
 }

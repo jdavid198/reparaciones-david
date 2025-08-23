@@ -326,9 +326,139 @@
           background-color: #ffc107; color: #212529;
           &:hover { background-color: #e0a800; transform: translateY(-1px); }
         }
+        &.btn-editar {
+          background-color: #007bff; color: white;
+          &:hover { background-color: #0069d9; transform: translateY(-1px); }
+        }
       }
     }
   }
+
+  /* =============================
+     MODAL BACKDROP
+============================== */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* =============================
+     MODAL
+============================== */
+.modal {
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 420px; /* ahora el ancho máximo */
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+  animation: slideDown 0.3s ease;
+  box-sizing: border-box; /* evita overflow */
+}
+
+.modal * {
+  box-sizing: border-box;
+}
+
+.modal h2 {
+  margin: 0 0 1rem;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #18777C; /* tu color corporativo */
+  text-align: center;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.5rem;
+}
+
+/* =============================
+     FORM ELEMENTS
+============================== */
+.modal label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin: 0.8rem 0 0.3rem;
+  color: #333;
+}
+
+.modal input,
+.modal textarea {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  margin-top: 0.2rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.modal input:focus,
+.modal textarea:focus {
+  border-color: #18777C;
+  box-shadow: 0 0 4px rgba(24,119,124,0.4);
+  outline: none;
+}
+
+/* =============================
+     ACTIONS
+============================== */
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.8rem;
+  margin-top: 1.5rem;
+}
+
+.btn-guardar,
+.btn-cancelar {
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.btn-guardar {
+  background: #28a745;
+  color: #fff;
+}
+
+.btn-guardar:hover {
+  background: #218838;
+  transform: scale(1.02);
+}
+
+.btn-cancelar {
+  background: #dc3545;
+  color: #fff;
+}
+
+.btn-cancelar:hover {
+  background: #c82333;
+  transform: scale(1.02);
+}
+
+/* =============================
+     ANIMATIONS
+============================== */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+
 
   /* =============================
      RESPONSIVIDAD
@@ -356,5 +486,21 @@
         }
       }
     }
+    .modal {
+      width: 95%;
+      max-width: none;
+      padding: 1rem;
+      border-radius: 8px;
+    }
+
+    .modal-actions {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .modal-actions button {
+      width: 100%;
+    }
   }
+
 }

@@ -1,13 +1,13 @@
 <app-toast></app-toast>
 <div class="container">
-  
-      <div class="form-header">
-      <img src="/logo.png" alt="Logo" class="logo" />
-      <div class="titulo">
-        <h1>Reparaciones</h1>
-      </div>
+
+  <div class="form-header">
+    <img src="/logo.png" alt="Logo" class="logo" />
+    <div class="titulo">
+      <h1>Reparaciones</h1>
     </div>
-  
+  </div>
+
   <form [formGroup]="form" (ngSubmit)="registrar()">
     <div class="form-grid-3">
 
@@ -27,12 +27,8 @@
 
         <div class="campo">
           <label>Teléfono</label>
-          <input type="tel"
-                formControlName="telefono"
-                placeholder="Ej: 3001234567"
-                maxlength="10"
-                inputmode="numeric"
-                (input)="validarInputTelefono($event)" />
+          <input type="tel" formControlName="telefono" placeholder="Ej: 3001234567" maxlength="10" inputmode="numeric"
+            (input)="validarInputTelefono($event)" />
         </div>
       </div>
 
@@ -42,20 +38,14 @@
 
         <div class="campo">
           <label>Cantidad de artículos</label>
-          <input 
-            type="number" 
-            formControlName="cantidad" 
-            placeholder="Ej: 2" 
-            min="1"
-          />
+          <input type="number" formControlName="cantidad" placeholder="Ej: 2" min="1" />
           <div class="error" *ngIf="form.get('cantidad')?.errors?.['min']">
           </div>
         </div>
 
         <div class="campo descripcion">
           <label>Descripción</label>
-          <textarea formControlName="descripcion"
-            placeholder="Detalle del trabajo, artículo o daño a reparar..."
+          <textarea formControlName="descripcion" placeholder="Detalle del trabajo, artículo o daño a reparar..."
             maxlength="150"></textarea>
         </div>
 
@@ -171,8 +161,73 @@
             title="Marcar como pendiente">
             ⏳ Pendiente
           </button>
+          <button class="btn-editar" (click)="editarReparacion(rep)" title="Editar reparación">
+            ✎ Editar
+          </button>
         </td>
       </tr>
     </tbody>
   </table>
+
+<!-- Modal Editar Reparación -->
+<div class="modal-backdrop" *ngIf="modalEditarVisible">
+  <div class="modal">
+    <h2>Editar reparación</h2>
+
+    <form [formGroup]="formEditar" (ngSubmit)="guardarEdicion()">
+
+      <!-- Solo lectura -->
+      <label>
+        Cliente:
+        <input formControlName="nombre" readonly />
+      </label>
+
+      <label>
+        Teléfono:
+        <input formControlName="telefono" readonly />
+      </label>
+
+      <label>
+        Fecha Ingreso:
+        <input formControlName="fechaIngreso" readonly />
+      </label>
+
+      <label>
+        Valor del Trabajo:
+        <input type="number" formControlName="valorTrabajo" readonly />
+      </label>
+
+      <label>
+        Saldo:
+        <input type="number" formControlName="saldo" readonly />
+      </label>
+
+      <!-- Campos editables -->
+      <label>
+        Descripción:
+        <textarea formControlName="descripcion" maxlength="150"></textarea>
+      </label>
+
+      <label>
+        Abono:
+        <input type="number" formControlName="abono" />
+      </label>
+
+      <label>
+        Cantidad de artículos:
+        <input type="number" formControlName="cantidad" />
+      </label>
+
+      <!-- Botones -->
+      <div class="modal-actions">
+        <button type="submit" class="btn-guardar">💾 Guardar</button>
+        <button type="button" class="btn-cancelar" (click)="cerrarModal()">✖ Cancelar</button>
+      </div>
+    </form>
+  </div>
 </div>
+
+
+</div>
+
+

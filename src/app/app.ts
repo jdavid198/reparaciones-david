@@ -20,7 +20,7 @@ export class App {
   filtroTexto: string = '';
   filtroAplicado: string = '';
   filtrandoEnFirebase: boolean = false;
-  
+
   hoy: string = this.getHoy();
 
   constructor(private fb: FormBuilder, private repairService: RepairService, private toastService: ToastService) {
@@ -92,11 +92,11 @@ export class App {
     const cantidad = Math.max(1, Number(raw.cantidad) || 1);
 
     if (this.mostrarErroresFormulario()) return;
-    if (cantidad < 1 ) {
+    if (cantidad < 1) {
       this.toastService.info('Cantidad', ['La cantidad de artículos no puede ser negativa ni cero.']);
       return;
     }
-    if (cantidad > 12 ) {
+    if (cantidad > 12) {
       this.toastService.error('Cantidad', ['La cantidad de artículos no puede ser mayor a 12']);
       return;
     }
@@ -243,8 +243,8 @@ export class App {
       'Fecha Ingreso': rep.fechaIngreso,
       'Cliente': rep.nombre,
       'Teléfono': rep.telefono,
-      'Cantidad': rep.cantidad,            
-      'Descripción': rep.descripcion,  
+      'Cantidad': rep.cantidad,
+      'Descripción': rep.descripcion,
       'Valor del Trabajo': rep.valorTrabajo,
       'Abono': rep.abono,
       'Saldo': rep.saldo,
@@ -293,25 +293,90 @@ export class App {
     return parseInt(valor.toString().replace(/\D/g, ''), 10) || 0;
   }
 
-validarInputTelefono(event: any) {
-  let valor = event.target.value;
-  const original = valor;
+  validarInputTelefono(event: any) {
+    let valor = event.target.value;
+    const original = valor;
 
-  // Quitar cualquier cosa que no sea número
-  valor = valor.replace(/\D/g, '');
-  if (valor !== original) {
-    this.toastService.error('Teléfono', ['Solo se permiten númerosss']);
+    // Quitar cualquier cosa que no sea número
+    valor = valor.replace(/\D/g, '');
+    if (valor !== original) {
+      this.toastService.error('Teléfono', ['Solo se permiten númerosss']);
+    }
+
+    // Limitar a 10 dígitos
+    if (valor.length > 10) {
+      valor = valor.substring(0, 10);
+      this.toastService.error('Teléfono', ['El teléfono solo puede tener 10 dígitos']);
+    }
+
+    // Setear el valor limpio al input y al form
+    event.target.value = valor;
+    this.form.get('telefono')?.setValue(valor, { emitEvent: false });
   }
 
-  // Limitar a 10 dígitos
-  if (valor.length > 10) {
-    valor = valor.substring(0, 10);
-    this.toastService.error('Teléfono', ['El teléfono solo puede tener 10 dígitos']);
+  //MODAL DE EDITAR
+  modalEditarVisible = false;
+  formEditar!: FormGroup;
+  repSeleccionada: any;
+
+  editarReparacion(rep: any) {
+    this.repSeleccionada = rep;
+    this.formEditar = this.fb.group({
+      nombre: [{ value: rep.nombre, disabled: true }],
+      telefono: [{ value: rep.telefono, disabled: true }],
+      fechaIngreso: [{ value: rep.fechaIngreso, disabled: true }],
+      valorTrabajo: [{ value: rep.valorTrabajo, disabled: true }],
+      saldo: [{ value: rep.saldo, disabled: true }],
+      descripcion: [rep.descripcion, [Validators.required, Validators.maxLength(150)]],
+      abono: [rep.abono, [Validators.required, Validators.min(0)]],
+      cantidad: [rep.cantidad, [Validators.required, Validators.min(1)]],
+    });
+
+    this.formEditar.get('abono')?.valueChanges.subscribe((abono) => {
+      const total = rep.valorTrabajo;
+      const saldo = total - (abono || 0);
+      this.formEditar.get('saldo')?.setValue(saldo >= 0 ? saldo : 0, { emitEvent: false });
+    });
+
+    this.modalEditarVisible = true;
   }
 
-  // Setear el valor limpio al input y al form
-  event.target.value = valor;
-  this.form.get('telefono')?.setValue(valor, { emitEvent: false });
+
+  cerrarModal() {
+    this.modalEditarVisible = false;
+  }
+
+async guardarEdicion() {
+  if (this.formEditar.invalid) return;
+
+  const valoresEditados = this.formEditar.getRawValue();
+
+  if (valoresEditados.abono > this.repSeleccionada.valorTrabajo) {
+    this.toastService.error('Abono inválido', [
+      'El abono no puede ser mayor al valor del trabajo',
+    ]);
+    return;
+  }
+
+  const nuevoSaldo = this.repSeleccionada.valorTrabajo - valoresEditados.abono;
+
+  try {
+    await this.repairService.actualizarReparacion(this.repSeleccionada.id, {
+      descripcion: valoresEditados.descripcion,
+      abono: valoresEditados.abono,
+      cantidad: valoresEditados.cantidad,
+      saldo: nuevoSaldo >= 0 ? nuevoSaldo : 0
+    });
+
+    this.toastService.success('Actualización exitosa', ['La reparación fue actualizada correctamente']);
+    this.cargarReparaciones(this.filtroAplicado || '');
+  } catch (err) {
+    console.error('Error al actualizar:', err);
+    this.toastService.error('Error al actualizar', ['No fue posible actualizar la reparación']);
+  }
+
+  this.cerrarModal();
 }
+
 
 }
