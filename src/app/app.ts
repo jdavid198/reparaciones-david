@@ -27,9 +27,9 @@ export class App {
     this.form = this.fb.group({
       fechaIngreso: [this.hoy, Validators.required],
       nombre: ['', Validators.required],
-      telefono: ['', Validators.required],
-      cantidad: [1, [Validators.required, Validators.min(1)]],
-      descripcion: ['', Validators.required],
+      telefono: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(10)]],
+      cantidad: [1, [Validators.required, Validators.min(1), Validators.max(12)]],
+      descripcion: ['', [Validators.required, Validators.maxLength(150)]],
       valorTrabajo: [0, Validators.required],
       abono: [0, Validators.required],
       saldo: [0, Validators.required],
@@ -39,21 +39,69 @@ export class App {
     this.cargarReparaciones('');
   }
 
-  registrar() {
+  private readonly campoLabels: Record<string, string> = {
+    fechaIngreso: 'Fecha de Ingreso',
+    nombre: 'Nombre del Cliente',
+    telefono: 'Teléfono',
+    cantidad: 'Cantidad de artículos',
+    descripcion: 'Descripción',
+    valorTrabajo: 'Valor del Trabajo',
+    abono: 'Abono',
+    codigoReclamacion: 'Código de Reclamación'
+  };
 
+  private mostrarErroresFormulario(): boolean {
+    const camposInvalidos: string[] = [];
+
+    Object.keys(this.form.controls).forEach(key => {
+      const control = this.form.get(key);
+      if (!control || control.valid) return;
+
+      if (key === 'telefono') {
+        if (control.hasError('minlength')) {
+          this.toastService.show('❌ El teléfono debe tener al menos 6 dígitos.', 'error');
+          return;
+        }
+        if (control.hasError('maxlength')) {
+          this.toastService.show('❌ El teléfono no puede tener más de 10 dígitos.', 'error');
+          return;
+        }
+      }
+
+      if (control.hasError('required') && this.campoLabels[key]) {
+        camposInvalidos.push(this.campoLabels[key]);
+      }
+    });
+
+    if (camposInvalidos.length > 0) {
+      this.toastService.show(
+        `❌ Faltan campos obligatorios: ${camposInvalidos.join(', ')}`,
+        'error'
+      );
+      return true;
+    }
+
+    return false;
+  }
+
+  registrar() {
     const raw = this.form.getRawValue();
     const valorTrabajoNum = this.obtenerNumero(raw.valorTrabajo);
     const abonoNum = this.obtenerNumero(raw.abono);
     const saldoNum = valorTrabajoNum - abonoNum;
     const cantidad = Math.max(1, Number(raw.cantidad) || 1);
 
-    if (!this.form.valid) {
-      this.toastService.show('Formulario inválido. Revisa los campos.', 'error');
+    if (this.mostrarErroresFormulario()) return;
+    if (cantidad < 1 ) {
+      this.toastService.show('❌ La cantidad de artículos no puede ser negativa ni cero.', 'error');
       return;
     }
-
-    if (cantidad < 1) {
-      this.toastService.show('❌ La cantidad no puede ser negativa ni cero.', 'error');
+    if (cantidad > 12 ) {
+      this.toastService.show('❌ La cantidad de artículos no puede ser mayor a 12.', 'error');
+      return;
+    }
+    if (saldoNum < 0) {
+      this.toastService.show('❌ El saldo no puede ser menor a 0.', 'error');
       return;
     }
 
@@ -71,7 +119,7 @@ export class App {
 
     this.repairService.addEntry(payload)
       .then(() => {
-        this.toastService.show('Registro exitoso', 'success');
+        this.toastService.show('Registro exitoso ✅', 'success');
         this.form.reset({
           fechaIngreso: this.getHoy(),
           cantidad: 1,
@@ -89,7 +137,6 @@ export class App {
         this.toastService.show('❌ Ocurrió un error al registrar', 'error');
       });
   }
-
 
   private getHoy(): string {
     const fecha = new Date();
