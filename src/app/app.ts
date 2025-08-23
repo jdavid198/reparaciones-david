@@ -30,8 +30,8 @@ export class App {
       telefono: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(10)]],
       cantidad: [1, [Validators.required, Validators.min(1), Validators.max(12)]],
       descripcion: ['', [Validators.required, Validators.maxLength(150)]],
-      valorTrabajo: [0, Validators.required],
-      abono: [0, Validators.required],
+      valorTrabajo: [null, [Validators.required, Validators.min(1000)]],
+      abono: [null, [Validators.required, Validators.min(1000)]],
       saldo: [0, Validators.required],
       codigoReclamacion: ['', Validators.required]
     });
@@ -52,6 +52,7 @@ export class App {
 
   private mostrarErroresFormulario(): boolean {
     const camposInvalidos: string[] = [];
+    let tieneErrores = false
 
     Object.keys(this.form.controls).forEach(key => {
       const control = this.form.get(key);
@@ -60,11 +61,11 @@ export class App {
       if (key === 'telefono') {
         if (control.hasError('minlength')) {
           this.toastService.error('Teléfono', ['El teléfono debe tener al menos 6 dígitos.']);
-          return;
+          tieneErrores = true;
         }
         if (control.hasError('maxlength')) {
           this.toastService.error('Teléfono', ['El teléfono no puede tener más de 10 dígitos.']);
-          return;
+          tieneErrores = true;
         }
       }
 
@@ -78,10 +79,10 @@ export class App {
         'Faltan campos obligatorios',
         camposInvalidos.map(campo => `${campo}`)
       );
-      return true;
+       tieneErrores = true;
     }
 
-    return false;
+    return tieneErrores;
   }
 
   registrar() {
@@ -102,6 +103,14 @@ export class App {
     }
     if (saldoNum < 0) {
       this.toastService.error('Saldo', ['El saldo no puede ser menor a 0.']);
+      return;
+    }
+    if (valorTrabajoNum < 0 || valorTrabajoNum == 0) {
+      this.toastService.error('Valor trabajo', ['El valor trabajo no puede ser 0 o menor.']);
+      return;
+    }
+    if (abonoNum < 0 || abonoNum == 0) {
+      this.toastService.error('Abono', ['El abono no puede ser 0 o menor.']);
       return;
     }
 
