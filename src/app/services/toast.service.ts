@@ -2,16 +2,37 @@ import { Injectable, signal } from '@angular/core';
 
 export type ToastType = 'success' | 'error' | 'info';
 
+export interface Toast {
+  type: ToastType;
+  title: string;
+  messages: string[]; 
+}
+
 @Injectable({ providedIn: 'root' })
 export class ToastService {
-  toasts = signal<{ message: string; type: ToastType }[]>([]);
+  toasts = signal<Toast[]>([]);
 
-  show(message: string, type: ToastType = 'success') {
-    this.toasts.update((prev) => [...prev, { message, type }]);
-    setTimeout(() => this.remove(message), 3000);
+  show(config: Toast, duration: number = 5000) {
+    this.toasts.update((prev) => [...prev, config]);
+
+    setTimeout(() => this.remove(config), duration);
   }
 
-  private remove(message: string) {
-    this.toasts.update((prev) => prev.filter((t) => t.message !== message));
+
+  private remove(toast: Toast) {
+    this.toasts.update((prev) => prev.filter((t) => t !== toast));
+  }
+
+
+  success(title: string, messages: string[], duration = 5000) {
+    this.show({ type: 'success', title, messages }, duration);
+  }
+
+  error(title: string, messages: string[], duration = 5000) {
+    this.show({ type: 'error', title, messages }, duration);
+  }
+
+  info(title: string, messages: string[], duration = 5000) {
+    this.show({ type: 'info', title, messages }, duration);
   }
 }

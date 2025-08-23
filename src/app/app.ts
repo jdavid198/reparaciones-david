@@ -59,11 +59,11 @@ export class App {
 
       if (key === 'telefono') {
         if (control.hasError('minlength')) {
-          this.toastService.show('❌ El teléfono debe tener al menos 6 dígitos.', 'error');
+          this.toastService.error('Teléfono', ['El teléfono debe tener al menos 6 dígitos.']);
           return;
         }
         if (control.hasError('maxlength')) {
-          this.toastService.show('❌ El teléfono no puede tener más de 10 dígitos.', 'error');
+          this.toastService.error('Teléfono', ['El teléfono no puede tener más de 10 dígitos.']);
           return;
         }
       }
@@ -74,9 +74,9 @@ export class App {
     });
 
     if (camposInvalidos.length > 0) {
-      this.toastService.show(
-        `❌ Faltan campos obligatorios: ${camposInvalidos.join(', ')}`,
-        'error'
+      this.toastService.error(
+        'Faltan campos obligatorios',
+        camposInvalidos.map(campo => `${campo}`)
       );
       return true;
     }
@@ -93,15 +93,15 @@ export class App {
 
     if (this.mostrarErroresFormulario()) return;
     if (cantidad < 1 ) {
-      this.toastService.show('❌ La cantidad de artículos no puede ser negativa ni cero.', 'error');
+      this.toastService.info('Cantidad', ['La cantidad de artículos no puede ser negativa ni cero.']);
       return;
     }
     if (cantidad > 12 ) {
-      this.toastService.show('❌ La cantidad de artículos no puede ser mayor a 12.', 'error');
+      this.toastService.error('Cantidad', ['La cantidad de artículos no puede ser mayor a 12']);
       return;
     }
     if (saldoNum < 0) {
-      this.toastService.show('❌ El saldo no puede ser menor a 0.', 'error');
+      this.toastService.error('Saldo', ['El saldo no puede ser menor a 0.']);
       return;
     }
 
@@ -119,7 +119,7 @@ export class App {
 
     this.repairService.addEntry(payload)
       .then(() => {
-        this.toastService.show('Registro exitoso ✅', 'success');
+        this.toastService.success('Registro exitoso', ['La reparación fue guardada correctamente']);
         this.form.reset({
           fechaIngreso: this.getHoy(),
           cantidad: 1,
@@ -134,7 +134,7 @@ export class App {
         this.cargarReparaciones(this.filtroAplicado || '');
       })
       .catch(() => {
-        this.toastService.show('❌ Ocurrió un error al registrar', 'error');
+        this.toastService.error('Ocurrió un error', ['Ocurrió un error al registrar']);
       });
   }
 
@@ -300,13 +300,13 @@ validarInputTelefono(event: any) {
   // Quitar cualquier cosa que no sea número
   valor = valor.replace(/\D/g, '');
   if (valor !== original) {
-    this.toastService.show('Solo se permiten números', 'error');
+    this.toastService.error('Teléfono', ['Solo se permiten númerosss']);
   }
 
   // Limitar a 10 dígitos
   if (valor.length > 10) {
     valor = valor.substring(0, 10);
-    this.toastService.show('El teléfono solo puede tener 10 dígitos', 'error');
+    this.toastService.error('Teléfono', ['El teléfono solo puede tener 10 dígitos']);
   }
 
   // Setear el valor limpio al input y al form

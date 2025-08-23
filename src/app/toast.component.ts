@@ -9,9 +9,27 @@ import { ToastService } from './services/toast.service';
   template: `
     <div class="toast-container">
       <div *ngFor="let t of toastService.toasts()" 
-           class="toast" 
+           class="toast"
            [ngClass]="t.type">
-        {{ t.message }}
+
+        <div class="toast-header">
+          <span class="icon">
+            <ng-container [ngSwitch]="t.type">
+              <span *ngSwitchCase="'success'">✅</span>
+              <span *ngSwitchCase="'error'">❌</span>
+              <span *ngSwitchCase="'info'">ℹ️</span>
+            </ng-container>
+          </span>
+          <span class="title">{{ t.title }}</span>
+        </div>
+
+        <div class="toast-body">
+          <ul>
+            <li *ngFor="let msg of t.messages">{{ msg }}</li>
+          </ul>
+        </div>
+
+        <div class="progress-bar"></div>
       </div>
     </div>
   `,
